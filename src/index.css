@@ -1,0 +1,184 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 7%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 210 20% 92%;
+    --card-hover: 220 18% 13%;
+
+    --popover: 220 18% 12%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 220 20% 7%;
+
+    --secondary: 220 16% 16%;
+    --secondary-foreground: 210 20% 80%;
+
+    --muted: 220 14% 14%;
+    --muted-foreground: 0 0% 100%;
+
+    --accent: 32 95% 55%;
+    --accent-foreground: 220 20% 7%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 160 84% 39%;
+
+    --radius: 0.75rem;
+
+    --chart-green: 160 84% 39%;
+    --chart-orange: 32 95% 55%;
+    --chart-red: 0 72% 51%;
+    --chart-blue: 210 100% 56%;
+    --chart-cyan: 185 80% 50%;
+
+    --kpi-gradient-1: linear-gradient(
+      135deg,
+      hsl(160 84% 39%),
+      hsl(185 80% 50%)
+    );
+    --kpi-gradient-2: linear-gradient(
+      135deg,
+      hsl(32 95% 55%),
+      hsl(45 100% 60%)
+    );
+    --kpi-gradient-3: linear-gradient(
+      135deg,
+      hsl(210 100% 56%),
+      hsl(230 80% 60%)
+    );
+    --kpi-gradient-4: linear-gradient(135deg, hsl(0 72% 51%), hsl(330 80% 50%));
+
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card-hover: 0 8px 32px -4px hsl(0 0% 0% / 0.6);
+
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 220 20% 7%;
+    --sidebar-accent: 220 16% 16%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 14% 18%;
+    --sidebar-ring: 160 84% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .kpi-gradient-1 {
+    background: var(--kpi-gradient-1);
+  }
+  .kpi-gradient-2 {
+    background: var(--kpi-gradient-2);
+  }
+  .kpi-gradient-3 {
+    background: var(--kpi-gradient-3);
+  }
+  .kpi-gradient-4 {
+    background: var(--kpi-gradient-4);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .animate-count {
+    animation: countUp 0.8s ease-out forwards;
+  }
+
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.logo-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
