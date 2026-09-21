@@ -20,7 +20,27 @@ import {
 import { SITES, SiteConfig } from "@/lib/sites";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import {
+  SiteComparisonChart,
+  MonthlyComparisonPoint,
+} from "@/components/SiteComparisonChart";
 import iconCenter from "../../public/museum-logo-DLmHQUl0.png";
+
+const ARABIC_MONTHS = [
+  "",
+  "يناير",
+  "فبراير",
+  "مارس",
+  "أبريل",
+  "مايو",
+  "يونيو",
+  "يوليو",
+  "أغسطس",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
 
 interface SiteState {
   site: SiteConfig;
@@ -35,6 +55,7 @@ const Overview = () => {
     SITES.map((site) => ({ site, data: [], loading: true, error: null })),
   );
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -44,22 +65,22 @@ const Overview = () => {
   }, [navigate]);
 
   useEffect(() => {
-    SITES.forEach((site, idx) => {
-      fetchSheetData(site.sheetName)
-        .then((data) => {
-          setSiteStates((prev) => {
-            const next = [...prev];
-            next[idx] = { site, data, loading: false, error: null };
-            return next;
-          });
-        })
-        .catch((err) => {
-          setSiteStates((prev) => {
-            const next = [...prev];
-            next[idx] = { site, data: [], loading: false, error: err.message };
-            return next;
-          });
-        });
+    Promise.allSettled(
+      SITES.map((site) => fetchSheetData(site.sheetName)),
+    ).then((results) => {
+      setSiteStates(
+        results.map((result, idx) =>
+          result.status === "fulfilled"
+            ? { site: SITES[idx], data: result.value, loading: false, error: null }
+            : {
+                site: SITES[idx],
+                data: [],
+                loading: false,
+                error: result.reason?.message ?? "خطأ غير متوقع",
+              },
+        ),
+      );
+      setLastUpdated(new Date());
     });
   }, []);
 
@@ -94,6 +115,32 @@ const Overview = () => {
     const combined = yearFilteredStates.flatMap((s) => s.filtered);
     return computeKPIs(combined);
   }, [yearFilteredStates]);
+
+  const monthlyComparison = useMemo<MonthlyComparisonPoint[]>(() => {
+    const map = new Map<string, MonthlyComparisonPoint>();
+    yearFilteredStates.forEach(({ site, filtered }) => {
+      filtered.forEach((r) => {
+        if (r.isClosed) return;
+        const key = `${r.year}-${r.month}`;
+        const label =
+          selectedYear === "all"
+            ? `${ARABIC_MONTHS[r.month]} ${r.year}`
+            : ARABIC_MONTHS[r.month];
+        if (!map.has(key)) {
+          map.set(key, { label });
+        }
+        const entry = map.get(key)!;
+        entry[site.id] = ((entry[site.id] as number) || 0) + r.visitors;
+      });
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => {
+        const [ay, am] = a.split("-").map(Number);
+        const [by, bm] = b.split("-").map(Number);
+        return ay - by || am - bm;
+      })
+      .map(([, v]) => v);
+  }, [yearFilteredStates, selectedYear]);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -161,6 +208,21 @@ const Overview = () => {
               <p className="text-sm text-muted-foreground">
                 ملخص شامل لإحصائيات الزوار في مكة المكرمة والمدينة المنورة
               </p>
+              {lastUpdated && (
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                  آخر تحديث للبيانات:{" "}
+                  {lastUpdated.toLocaleDateString("ar-EG", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}{" "}
+                  -{" "}
+                  {lastUpdated.toLocaleTimeString("ar-EG", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
             </div>
           </div>
 
@@ -223,6 +285,11 @@ const Overview = () => {
             );
           })}
         </div>
+
+        {/* Monthly Comparison Chart */}
+        {monthlyComparison.length > 0 && (
+          <SiteComparisonChart data={monthlyComparison} sites={SITES} />
+        )}
 
         {/* Site Cards */}
         <div>

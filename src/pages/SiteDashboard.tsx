@@ -181,26 +181,46 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
     <div className="min-h-screen bg-background" dir="rtl">
       <div className="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl">
-              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border-2 border-primary/30 shadow-lg p-3">
-                <img
-                  src={site.logo}
-                  className="w-full h-full object-contain rounded-full"
-                  alt={site.name}
-                />
+        <header className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl">
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border-2 border-primary/30 shadow-lg p-3">
+                  <img
+                    src={site.logo}
+                    className="w-full h-full object-contain rounded-full"
+                    alt={site.name}
+                  />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                  {site.fullTitle}
+                </h1>
+                <p className="text-sm text-muted-foreground">{site.subtitle}</p>
               </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                {site.fullTitle}
-              </h1>
-              <p className="text-sm text-muted-foreground">{site.subtitle}</p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-card-hover text-foreground transition-colors"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="text-sm font-medium">النظرة العامة</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-medium">خروج</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex justify-start">
             <MonthSelector
               months={months}
               selectedYear={selectedYear}
@@ -210,21 +230,6 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
               selectedRange={selectedRange}
               onChange={handleDateChange}
             />
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:bg-card-hover text-foreground transition-colors"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-sm font-medium">النظرة العامة</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">خروج</span>
-            </button>
           </div>
         </header>
 
