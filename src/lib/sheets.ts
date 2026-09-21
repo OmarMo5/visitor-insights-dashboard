@@ -1,6 +1,6 @@
 const API_KEY = "AIzaSyDcsExaWkbH_2tmmsh9wav-S7AZNYVLNI4";
 const SHEET_ID = "1aiRMZeQLCtabh9HHhlpygizSK_SzuJ1ig01USAsG9_0";
-const SHEET_NAME = "MKH";
+const DEFAULT_SHEET_NAME = "MKH";
 
 /* 1QQIlX-cYTmuapGn5-HPHiuvxaxWoNBChxHJq4KVy2YI */
 
@@ -58,8 +58,10 @@ function parseDate(val: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export async function fetchSheetData(): Promise<VisitorRecord[]> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+export async function fetchSheetData(
+  sheetName: string = DEFAULT_SHEET_NAME,
+): Promise<VisitorRecord[]> {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}?key=${API_KEY}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
   const data = await response.json();
@@ -200,6 +202,15 @@ export function filterByWeek(
       record.day >= Math.max(1, startDay) &&
       record.day <= endDay,
   );
+}
+
+export function getAvailableYears(data: VisitorRecord[]): number[] {
+  const years = new Set(data.map((r) => r.year));
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+export function filterByYear(data: VisitorRecord[], year: number): VisitorRecord[] {
+  return data.filter((r) => r.year === year);
 }
 
 export function filterByDateRange(
