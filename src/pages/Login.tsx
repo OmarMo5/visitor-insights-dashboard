@@ -14,6 +14,12 @@ const users = [
     role: "admin",
   },
   {
+    email: "omar@gmail.com",
+    password: "pass12345",
+    name: "مدير النظام",
+    role: "admin",
+  },
+  {
     email: "user@asc.com",
     password: "user123",
     name: "محلل بيانات",
