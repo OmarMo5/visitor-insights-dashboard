@@ -22,8 +22,8 @@ const users = [
   {
     email: "user@asc.com",
     password: "user123",
-    name: "محلل بيانات",
-    role: "analyst",
+    name: "Manage Dashboard",
+    role: "user",
   },
 ];
 
