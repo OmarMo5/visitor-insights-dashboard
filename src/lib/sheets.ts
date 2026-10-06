@@ -204,15 +204,6 @@ export function filterByWeek(
   );
 }
 
-export function getAvailableYears(data: VisitorRecord[]): number[] {
-  const years = new Set(data.map((r) => r.year));
-  return Array.from(years).sort((a, b) => b - a);
-}
-
-export function filterByYear(data: VisitorRecord[], year: number): VisitorRecord[] {
-  return data.filter((r) => r.year === year);
-}
-
 export function filterByDateRange(
   data: VisitorRecord[],
   startDate: Date,
