@@ -25,6 +25,12 @@ const users = [
     name: "Manage Dashboard",
     role: "user",
   },
+  {
+    email: "ceo@asc.sa",
+    password: "$123456789$",
+    name: "مدير النظام",
+    role: "admin",
+  },
 ];
 
 const Login = () => {
