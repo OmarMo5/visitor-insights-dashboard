@@ -13,7 +13,7 @@ import iconMakkah from "../../public/museum-logo-DLmHQUl0.png";
 export const SITES: SiteConfig[] = [
   {
     id: "makkah",
-    sheetName: "MKH",
+    sheetName: "Data",
     path: "/dashboard/makkah",
     name: "مكة المكرمة",
     fullTitle:
