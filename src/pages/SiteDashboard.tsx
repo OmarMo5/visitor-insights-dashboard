@@ -25,6 +25,7 @@ import { DataTable } from "@/components/DataTable";
 import { AlertCircle, LogOut, ArrowRight, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VISIBILITY } from "@/config/visibility";
+import { fetchVisibility, VisibilityFlags } from "@/lib/remote-visibility";
 
 interface SiteDashboardProps {
   site: SiteConfig;
@@ -34,6 +35,7 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
   const [allData, setAllData] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<VisibilityFlags>(VISIBILITY);
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -55,6 +57,16 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchVisibility().then((flags) => {
+      if (!cancelled) setVisibility(flags);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -221,7 +233,7 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
             </div>
           </div>
 
-          {VISIBILITY.dateFilter && (
+          {visibility.dateFilter && (
             <div className="flex justify-start">
               <MonthSelector
                 months={months}
@@ -250,14 +262,14 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
         )}
 
         {/* KPI Cards */}
-        {VISIBILITY.kpiCards && <KPICards {...kpis} />}
+        {visibility.kpiCards && <KPICards {...kpis} />}
 
         {/* Density Trend Chart */}
-        {VISIBILITY.detailsSection && <DensityChart data={filteredData} />}
+        {visibility.detailsSection && <DensityChart data={filteredData} />}
 
         {/* Calendar + Gauge + Details Grid */}
         <div className="grid lg:grid-cols-5 gap-6">
-          {VISIBILITY.calendarHeatmap && (
+          {visibility.calendarHeatmap && (
             <div className="lg:col-span-3">
               <CalendarHeatmap
                 data={filteredData}
@@ -270,13 +282,13 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
           )}
           <div
             className={
-              VISIBILITY.calendarHeatmap
+              visibility.calendarHeatmap
                 ? "lg:col-span-2 space-y-6"
                 : "lg:col-span-5 space-y-6"
             }
           >
             <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
-            {VISIBILITY.detailsSection && selectedRecord && (
+            {visibility.detailsSection && selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}
                 onClose={() => setSelectedRecord(null)}
@@ -286,10 +298,10 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
         </div>
 
         {/* Visitor Chart */}
-        {VISIBILITY.detailsSection && <VisitorChart data={filteredData} />}
+        {visibility.detailsSection && <VisitorChart data={filteredData} />}
 
         {/* Data Table */}
-        {VISIBILITY.detailsSection && <DataTable data={filteredData} />}
+        {visibility.detailsSection && <DataTable data={filteredData} />}
 
         {/* Footer */}
         <footer className="text-center py-4 border-t border-border">

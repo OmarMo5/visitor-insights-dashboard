@@ -8,6 +8,7 @@ import Overview from "./pages/Overview";
 import MakkahDashboard from "./pages/MakkahDashboard";
 import MadinahDashboard from "./pages/MadinahDashboard";
 import NotFound from "./pages/NotFound";
+import VisibilityStatus from "./pages/VisibilityStatus";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route path="/system/health-check" element={<VisibilityStatus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

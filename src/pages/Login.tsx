@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, LogIn, Eye, EyeOff } from "lucide-react";
 import iconRight from "../../public/image2.png";
 import iconLeft from "../../public/logo-DcKrXCdY.svg";
 import iconCenter from "../../public/museum-logo-DLmHQUl0.png";
-import { VISIBILITY } from "@/config/visibility";
+import { fetchVisibility, VisibilityFlags } from "@/lib/remote-visibility";
 
 // مصفوفة المستخدمين المسموح لهم
 const users = [
@@ -41,6 +41,17 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [visibility, setVisibility] = useState<VisibilityFlags | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchVisibility().then((flags) => {
+      if (!cancelled) setVisibility(flags);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +82,9 @@ const Login = () => {
     }, 800);
   };
 
-  if (!VISIBILITY.loginPage) {
+  if (!visibility) return null;
+
+  if (!visibility.loginPage) {
     return (
       <div
         className="min-h-screen bg-background flex items-center justify-center p-4"
