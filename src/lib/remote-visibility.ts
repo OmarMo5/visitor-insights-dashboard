@@ -2,11 +2,9 @@ import { VISIBILITY } from "@/config/visibility";
 
 const API_KEY = "AIzaSyDcsExaWkbH_2tmmsh9wav-S7AZNYVLNI4";
 
-// شيتك انت الخاص (لازم تكون مالكه) — مش شيت المتاحف.
-// سيبها فاضية لحد ما تجهز الشيت وتحط الـ ID بتاعه هنا؛ لحد ما تعمل كده
-// الموقع هيستخدم القيم الافتراضية في src/config/visibility.ts عادي.
-const CONTROL_SHEET_ID = "";
-const CONTROL_RANGE = "Settings!A2:B50";
+// شيتك الخاص بإعدادات الإظهار/الإخفاء.
+const CONTROL_SHEET_ID = "1dY9NnmCsZM6uxOzDvwp0AVBCpVxmBrXOWi0F0YQfOe4";
+const CONTROL_RANGE = "Sheet1!A2:B50";
 
 export type VisibilityFlags = typeof VISIBILITY;
 
