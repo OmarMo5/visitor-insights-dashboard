@@ -24,6 +24,7 @@ import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { DataTable } from "@/components/DataTable";
 import { AlertCircle, LogOut, ArrowRight, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { VISIBILITY } from "@/config/visibility";
 
 interface SiteDashboardProps {
   site: SiteConfig;
@@ -220,17 +221,19 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
             </div>
           </div>
 
-          <div className="flex justify-start">
-            <MonthSelector
-              months={months}
-              selectedYear={selectedYear}
-              selectedMonth={selectedMonth}
-              filterType={filterType}
-              selectedWeek={selectedWeek}
-              selectedRange={selectedRange}
-              onChange={handleDateChange}
-            />
-          </div>
+          {VISIBILITY.dateFilter && (
+            <div className="flex justify-start">
+              <MonthSelector
+                months={months}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                filterType={filterType}
+                selectedWeek={selectedWeek}
+                selectedRange={selectedRange}
+                onChange={handleDateChange}
+              />
+            </div>
+          )}
         </header>
 
         {/* Filter Info Banner */}
@@ -247,25 +250,33 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
         )}
 
         {/* KPI Cards */}
-        <KPICards {...kpis} />
+        {VISIBILITY.kpiCards && <KPICards {...kpis} />}
 
         {/* Density Trend Chart */}
-        <DensityChart data={filteredData} />
+        {VISIBILITY.detailsSection && <DensityChart data={filteredData} />}
 
         {/* Calendar + Gauge + Details Grid */}
         <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3">
-            <CalendarHeatmap
-              data={filteredData}
-              year={selectedYear}
-              month={selectedMonth}
-              onDayClick={setSelectedRecord}
-              selectedDay={selectedRecord?.day ?? null}
-            />
-          </div>
-          <div className="lg:col-span-2 space-y-6">
+          {VISIBILITY.calendarHeatmap && (
+            <div className="lg:col-span-3">
+              <CalendarHeatmap
+                data={filteredData}
+                year={selectedYear}
+                month={selectedMonth}
+                onDayClick={setSelectedRecord}
+                selectedDay={selectedRecord?.day ?? null}
+              />
+            </div>
+          )}
+          <div
+            className={
+              VISIBILITY.calendarHeatmap
+                ? "lg:col-span-2 space-y-6"
+                : "lg:col-span-5 space-y-6"
+            }
+          >
             <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
-            {selectedRecord && (
+            {VISIBILITY.detailsSection && selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}
                 onClose={() => setSelectedRecord(null)}
@@ -275,10 +286,10 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
         </div>
 
         {/* Visitor Chart */}
-        <VisitorChart data={filteredData} />
+        {VISIBILITY.detailsSection && <VisitorChart data={filteredData} />}
 
         {/* Data Table */}
-        <DataTable data={filteredData} />
+        {VISIBILITY.detailsSection && <DataTable data={filteredData} />}
 
         {/* Footer */}
         <footer className="text-center py-4 border-t border-border">

@@ -4,6 +4,7 @@ import { Lock, Mail, LogIn, Eye, EyeOff } from "lucide-react";
 import iconRight from "../../public/image2.png";
 import iconLeft from "../../public/logo-DcKrXCdY.svg";
 import iconCenter from "../../public/museum-logo-DLmHQUl0.png";
+import { VISIBILITY } from "@/config/visibility";
 
 // مصفوفة المستخدمين المسموح لهم
 const users = [
@@ -69,6 +70,19 @@ const Login = () => {
       }
     }, 800);
   };
+
+  if (!VISIBILITY.loginPage) {
+    return (
+      <div
+        className="min-h-screen bg-background flex items-center justify-center p-4"
+        dir="rtl"
+      >
+        <p className="text-sm text-muted-foreground">
+          الخدمة غير متاحة حاليًا
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
