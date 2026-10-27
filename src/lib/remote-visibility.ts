@@ -3,9 +3,9 @@ import { VISIBILITY } from "@/config/visibility";
 const API_KEY = "AIzaSyDcsExaWkbH_2tmmsh9wav-S7AZNYVLNI4";
 
 // نفس شيت التحكم المستخدم في نسخة مكة+المدينة، بس تبويب مستقل
-// (MakkahOnly) عشان التحكم في النسخة دي يكون منفصل عن التانية.
+// (makkah) عشان التحكم في النسخة دي يكون منفصل عن التانية.
 const CONTROL_SHEET_ID = "1dY9NnmCsZM6uxOzDvwp0AVBCpVxmBrXOWi0F0YQfOe4";
-const CONTROL_RANGE = "MakkahOnly!A2:B50";
+const CONTROL_RANGE = "makkah!A2:B50";
 
 export type VisibilityFlags = typeof VISIBILITY;
 

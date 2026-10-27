@@ -104,7 +104,7 @@ const VisibilityStatus = () => {
             </div>
 
             <div className="text-xs text-muted-foreground bg-background/50 rounded-lg p-3 border border-border/50">
-              عشان تغيّر أي حاجة: افتح الشيت، في تبويب MakkahOnly غيّر قيمة
+              عشان تغيّر أي حاجة: افتح الشيت، في تبويب makkah غيّر قيمة
               الصف المناسب لـ TRUE أو FALSE، وارجع هنا واضغط "تحديث".
               التغيير بيوصل لكل زوار الموقع خلال ثواني.
             </div>
