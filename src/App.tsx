@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import VisibilityStatus from "./pages/VisibilityStatus";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route path="/system/health-check" element={<VisibilityStatus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

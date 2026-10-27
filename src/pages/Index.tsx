@@ -24,11 +24,14 @@ import { DataTable } from "@/components/DataTable";
 import { BarChart3, AlertCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import iconCenter from "../../public/museum-logo-DLmHQUl0.png";
+import { VISIBILITY } from "@/config/visibility";
+import { fetchVisibility, VisibilityFlags } from "@/lib/remote-visibility";
 
 const Index = () => {
   const [allData, setAllData] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<VisibilityFlags>(VISIBILITY);
 
   // 👇 بنستخدم التاريخ الحالي كـ default
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -52,6 +55,16 @@ const Index = () => {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchVisibility().then((flags) => {
+      if (!cancelled) setVisibility(flags);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     fetchSheetData()
@@ -203,15 +216,17 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <MonthSelector
-            months={months}
-            selectedYear={selectedYear}
-            selectedMonth={selectedMonth}
-            filterType={filterType}
-            selectedWeek={selectedWeek}
-            selectedRange={selectedRange}
-            onChange={handleDateChange}
-          />
+          {visibility.dateFilter && (
+            <MonthSelector
+              months={months}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+              filterType={filterType}
+              selectedWeek={selectedWeek}
+              selectedRange={selectedRange}
+              onChange={handleDateChange}
+            />
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
@@ -235,25 +250,33 @@ const Index = () => {
         )}
 
         {/* KPI Cards - 4 cards only */}
-        <KPICards {...kpis} />
+        {visibility.kpiCards && <KPICards {...kpis} />}
 
         {/* Density Trend Chart */}
-        <DensityChart data={filteredData} />
+        {visibility.detailsSection && <DensityChart data={filteredData} />}
 
         {/* Calendar + Gauge + Details Grid */}
         <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3">
-            <CalendarHeatmap
-              data={filteredData}
-              year={selectedYear}
-              month={selectedMonth}
-              onDayClick={setSelectedRecord}
-              selectedDay={selectedRecord?.day ?? null}
-            />
-          </div>
-          <div className="lg:col-span-2 space-y-6">
+          {visibility.calendarHeatmap && (
+            <div className="lg:col-span-3">
+              <CalendarHeatmap
+                data={filteredData}
+                year={selectedYear}
+                month={selectedMonth}
+                onDayClick={setSelectedRecord}
+                selectedDay={selectedRecord?.day ?? null}
+              />
+            </div>
+          )}
+          <div
+            className={
+              visibility.calendarHeatmap
+                ? "lg:col-span-2 space-y-6"
+                : "lg:col-span-5 space-y-6"
+            }
+          >
             <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
-            {selectedRecord && (
+            {visibility.detailsSection && selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}
                 onClose={() => setSelectedRecord(null)}
@@ -263,10 +286,10 @@ const Index = () => {
         </div>
 
         {/* Visitor Chart */}
-        <VisitorChart data={filteredData} />
+        {visibility.detailsSection && <VisitorChart data={filteredData} />}
 
         {/* Data Table */}
-        <DataTable data={filteredData} />
+        {visibility.detailsSection && <DataTable data={filteredData} />}
 
         {/* Footer */}
         <footer className="text-center py-4 border-t border-border">
