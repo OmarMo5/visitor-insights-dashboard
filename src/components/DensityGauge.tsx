@@ -5,7 +5,7 @@ import {
   filterByWeek,
   filterByMonth,
 } from "@/lib/sheets";
-import { Gauge } from "lucide-react";
+import { Gauge, ChevronRight, ChevronLeft } from "lucide-react";
 
 interface DensityGaugeProps {
   record: VisitorRecord | null;
@@ -15,9 +15,31 @@ interface DensityGaugeProps {
 
 type GaugePeriod = "day" | "week" | "month";
 
+interface DayRef {
+  year: number;
+  month: number;
+  day: number;
+}
+
+interface MonthRef {
+  year: number;
+  month: number;
+}
+
 function getWeekNumber(year: number, month: number, day: number): number {
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
   return Math.ceil((day + firstDayOfWeek) / 7);
+}
+
+function shiftWeek(ref: DayRef, deltaWeeks: number): DayRef {
+  const d = new Date(ref.year, ref.month - 1, ref.day);
+  d.setDate(d.getDate() + deltaWeeks * 7);
+  return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+}
+
+function shiftMonth(ref: MonthRef, deltaMonths: number): MonthRef {
+  const d = new Date(ref.year, ref.month - 1 + deltaMonths, 1);
+  return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
 
 const ARABIC_MONTHS = [
@@ -72,13 +94,41 @@ export function DensityGauge({
   const refMonth = active?.month ?? now.getMonth() + 1;
   const refDay = active?.day ?? now.getDate();
 
-  const weekNumber = getWeekNumber(refYear, refMonth, refDay);
+  // مرجع أسبوع/شهر الجيدج، بيتزامن مع اليوم المختار في الكالندر،
+  // وبعد كده يتحرك بزرار السابق/التالي لوحده من غير ما يرتبط بالكالندر.
+  const [weekAnchor, setWeekAnchor] = useState<DayRef>({
+    year: refYear,
+    month: refMonth,
+    day: refDay,
+  });
+  const [monthAnchor, setMonthAnchor] = useState<MonthRef>({
+    year: refYear,
+    month: refMonth,
+  });
+
+  useEffect(() => {
+    setWeekAnchor({ year: refYear, month: refMonth, day: refDay });
+    setMonthAnchor({ year: refYear, month: refMonth });
+  }, [refYear, refMonth, refDay]);
+
+  const weekNumber = getWeekNumber(
+    weekAnchor.year,
+    weekAnchor.month,
+    weekAnchor.day,
+  );
 
   const periodKpis =
     period === "week"
-      ? computeKPIs(filterByWeek(allData, refYear, refMonth, weekNumber))
+      ? computeKPIs(
+          filterByWeek(
+            allData,
+            weekAnchor.year,
+            weekAnchor.month,
+            weekNumber,
+          ),
+        )
       : period === "month"
-        ? computeKPIs(filterByMonth(allData, refYear, refMonth))
+        ? computeKPIs(filterByMonth(allData, monthAnchor.year, monthAnchor.month))
         : null;
 
   const isDay = period === "day";
@@ -162,16 +212,24 @@ export function DensityGauge({
 
   const periodLabel =
     period === "week"
-      ? `الأسبوع ${weekNumber} — ${ARABIC_MONTHS[refMonth]} ${refYear}`
-      : `${ARABIC_MONTHS[refMonth]} ${refYear}`;
+      ? `الأسبوع ${weekNumber} — ${ARABIC_MONTHS[weekAnchor.month]} ${weekAnchor.year}`
+      : `${ARABIC_MONTHS[monthAnchor.month]} ${monthAnchor.year}`;
 
   const subtitle = isDay
     ? record
       ? "اليوم المحدد من التقويم"
       : "بيانات اليوم الحالي"
-    : period === "week"
-      ? "متوسط الأسبوع المحدد"
-      : "متوسط الشهر الحالي";
+    : null;
+
+  const goPrev = () => {
+    if (period === "week") setWeekAnchor((a) => shiftWeek(a, -1));
+    if (period === "month") setMonthAnchor((a) => shiftMonth(a, -1));
+  };
+
+  const goNext = () => {
+    if (period === "week") setWeekAnchor((a) => shiftWeek(a, 1));
+    if (period === "month") setMonthAnchor((a) => shiftMonth(a, 1));
+  };
 
   return (
     <div
@@ -201,7 +259,29 @@ export function DensityGauge({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mb-4">{subtitle}</p>
+      {isDay ? (
+        <p className="text-xs text-muted-foreground mb-4">{subtitle}</p>
+      ) : (
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <button
+            onClick={goPrev}
+            className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="الفترة السابقة"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <span className="text-sm font-semibold text-foreground min-w-[140px] text-center">
+            {periodLabel}
+          </span>
+          <button
+            onClick={goNext}
+            className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="الفترة التالية"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="flex justify-center">
         <svg width="280" height="160" viewBox="0 0 280 160">
@@ -292,11 +372,6 @@ export function DensityGauge({
         </div>
       ) : (
         <div className="space-y-2.5 mt-2 pt-4 border-t border-border">
-          <div className="flex justify-between text-sm">
-            <span>الفترة</span>
-            <span className="font-mono">{periodLabel}</span>
-          </div>
-
           <div className="flex justify-between text-sm">
             <span>إجمالي الزوار</span>
             <span className="font-bold font-mono">
