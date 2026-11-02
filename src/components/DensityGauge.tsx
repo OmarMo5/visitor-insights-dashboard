@@ -1,10 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { VisitorRecord } from "@/lib/sheets";
-import { Users, Gauge, CalendarDays } from "lucide-react";
+import {
+  VisitorRecord,
+  computeKPIs,
+  filterByWeek,
+  filterByMonth,
+} from "@/lib/sheets";
+import { Gauge } from "lucide-react";
 
 interface DensityGaugeProps {
   record: VisitorRecord | null;
   todayRecord: VisitorRecord | null;
+  allData: VisitorRecord[];
+}
+
+type GaugePeriod = "day" | "week" | "month";
+
+function getWeekNumber(year: number, month: number, day: number): number {
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
+  return Math.ceil((day + firstDayOfWeek) / 7);
 }
 
 const ARABIC_MONTHS = [
@@ -23,6 +36,12 @@ const ARABIC_MONTHS = [
   "ديسمبر",
 ];
 
+const PERIOD_LABELS: Record<GaugePeriod, string> = {
+  day: "يوم",
+  week: "أسبوع",
+  month: "شهر",
+};
+
 function getGaugeColor(pct: number) {
   if (pct <= 40) return { main: "hsl(160, 84%, 39%)" };
   if (pct <= 70) return { main: "hsl(32, 95%, 55%)" };
@@ -36,21 +55,44 @@ function getLevelArabic(pct: number, isClosed: boolean) {
   return "مرتفعة";
 }
 
-export function DensityGauge({ record, todayRecord }: DensityGaugeProps) {
+export function DensityGauge({
+  record,
+  todayRecord,
+  allData,
+}: DensityGaugeProps) {
+  const [period, setPeriod] = useState<GaugePeriod>("day");
+
   const active = record || todayRecord;
 
   const [animatedPct, setAnimatedPct] = useState(0);
   const prevPct = useRef(0);
 
-  const isClosed = active?.isClosed ?? true;
-  const visitors = active?.visitors ?? 0;
-  const capacity =
-    active?.capacity && active.capacity > 0 ? active.capacity : 300;
+  const now = new Date();
+  const refYear = active?.year ?? now.getFullYear();
+  const refMonth = active?.month ?? now.getMonth() + 1;
+  const refDay = active?.day ?? now.getDate();
 
-  const targetPct =
-    isClosed || capacity === 0
+  const weekNumber = getWeekNumber(refYear, refMonth, refDay);
+
+  const periodKpis =
+    period === "week"
+      ? computeKPIs(filterByWeek(allData, refYear, refMonth, weekNumber))
+      : period === "month"
+        ? computeKPIs(filterByMonth(allData, refYear, refMonth))
+        : null;
+
+  const isDay = period === "day";
+  const isClosed = isDay ? (active?.isClosed ?? true) : false;
+
+  const dayCapacity =
+    active?.capacity && active.capacity > 0 ? active.capacity : 300;
+  const dayVisitors = active?.visitors ?? 0;
+
+  const targetPct = isDay
+    ? isClosed || dayCapacity === 0
       ? 0
-      : Math.min(100, Math.round((visitors / capacity) * 100));
+      : Math.min(100, Math.round((dayVisitors / dayCapacity) * 100))
+    : Math.round((periodKpis?.avgDensity ?? 0) * 100);
 
   useEffect(() => {
     const start = prevPct.current;
@@ -114,23 +156,52 @@ export function DensityGauge({ record, todayRecord }: DensityGaugeProps) {
   const nX = cx + needleLen * Math.cos(currentAngle);
   const nY = cy - needleLen * Math.sin(currentAngle);
 
-  const dateLabel = active
+  const dayDateLabel = active
     ? `${active.day} ${ARABIC_MONTHS[active.month]} ${active.year}`
     : "—";
+
+  const periodLabel =
+    period === "week"
+      ? `الأسبوع ${weekNumber} — ${ARABIC_MONTHS[refMonth]} ${refYear}`
+      : `${ARABIC_MONTHS[refMonth]} ${refYear}`;
+
+  const subtitle = isDay
+    ? record
+      ? "اليوم المحدد من التقويم"
+      : "بيانات اليوم الحالي"
+    : period === "week"
+      ? "متوسط الأسبوع المحدد"
+      : "متوسط الشهر الحالي";
 
   return (
     <div
       className="rounded-xl border border-border bg-card p-6 shadow-card animate-fade-in"
       dir="rtl"
     >
-      <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
-        <Gauge className="w-5 h-5 text-secondary" />
-        كثافة الزوار
-      </h3>
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Gauge className="w-5 h-5 text-secondary" />
+          كثافة الزوار
+        </h3>
 
-      <p className="text-xs text-muted-foreground mb-4">
-        {record ? "اليوم المحدد من التقويم" : "بيانات اليوم الحالي"}
-      </p>
+        <div className="flex bg-background border border-border rounded-lg p-0.5">
+          {(Object.keys(PERIOD_LABELS) as GaugePeriod[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                period === p
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {PERIOD_LABELS[p]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground mb-4">{subtitle}</p>
 
       <div className="flex justify-center">
         <svg width="280" height="160" viewBox="0 0 280 160">
@@ -193,31 +264,61 @@ export function DensityGauge({ record, todayRecord }: DensityGaugeProps) {
 
       {/* stats */}
 
-      <div className="space-y-2.5 mt-2 pt-4 border-t border-border">
-        <div className="flex justify-between text-sm">
-          <span>اليوم المختار</span>
-          <span className="font-mono">{dateLabel}</span>
-        </div>
+      {isDay ? (
+        <div className="space-y-2.5 mt-2 pt-4 border-t border-border">
+          <div className="flex justify-between text-sm">
+            <span>اليوم المختار</span>
+            <span className="font-mono">{dayDateLabel}</span>
+          </div>
 
-        <div className="flex justify-between text-sm">
-          <span>عدد الزوار</span>
-          <span className="font-bold font-mono">
-            {isClosed ? "مغلق" : visitors.toLocaleString()}
-          </span>
-        </div>
+          <div className="flex justify-between text-sm">
+            <span>عدد الزوار</span>
+            <span className="font-bold font-mono">
+              {isClosed ? "مغلق" : dayVisitors.toLocaleString()}
+            </span>
+          </div>
 
-        <div className="flex justify-between text-sm">
-          <span>السعة القصوى</span>
-          <span className="font-mono">{capacity}</span>
-        </div>
+          <div className="flex justify-between text-sm">
+            <span>السعة القصوى</span>
+            <span className="font-mono">{dayCapacity}</span>
+          </div>
 
-        <div className="flex justify-between text-sm">
-          <span>نسبة الكثافة</span>
-          <span style={{ color: main }} className="font-bold font-mono">
-            {isClosed ? "—" : `${targetPct}%`}
-          </span>
+          <div className="flex justify-between text-sm">
+            <span>نسبة الكثافة</span>
+            <span style={{ color: main }} className="font-bold font-mono">
+              {isClosed ? "—" : `${targetPct}%`}
+            </span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-2.5 mt-2 pt-4 border-t border-border">
+          <div className="flex justify-between text-sm">
+            <span>الفترة</span>
+            <span className="font-mono">{periodLabel}</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span>إجمالي الزوار</span>
+            <span className="font-bold font-mono">
+              {(periodKpis?.totalVisitors ?? 0).toLocaleString()}
+            </span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span>أعلى عدد زوار في يوم</span>
+            <span className="font-mono">
+              {(periodKpis?.peakVisitors ?? 0).toLocaleString()}
+            </span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span>متوسط الكثافة</span>
+            <span style={{ color: main }} className="font-bold font-mono">
+              {targetPct}%
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

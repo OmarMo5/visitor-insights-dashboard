@@ -287,7 +287,11 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
                 : "lg:col-span-5 space-y-6"
             }
           >
-            <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
+            <DensityGauge
+              record={selectedRecord}
+              todayRecord={todayRecord}
+              allData={allData}
+            />
             {visibility.detailsSection && selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}

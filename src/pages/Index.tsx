@@ -252,7 +252,11 @@ const Index = () => {
             />
           </div>
           <div className="lg:col-span-2 space-y-6">
-            <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
+            <DensityGauge
+              record={selectedRecord}
+              todayRecord={todayRecord}
+              allData={allData}
+            />
             {selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}
