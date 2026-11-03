@@ -62,7 +62,7 @@ export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
       label: "ساعات العمل",
       value: record.isClosed
         ? "مغلق"
-        : `${record.openTime} – ${record.closeTime}`,
+        : `${record.openTime} إلى ${record.closeTime}`,
       color: "text-chart-cyan",
     },
   ];
