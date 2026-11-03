@@ -1,5 +1,6 @@
 import { VisitorRecord } from "@/lib/sheets";
-import { Users, UserPlus, Gauge, Activity, Clock, X } from "lucide-react";
+import { Users, UserPlus, Gauge, Clock, X } from "lucide-react";
+import { getGaugeColor, getLevelArabic } from "@/components/DensityGauge";
 
 interface DayDetailsPanelProps {
   record: VisitorRecord | null;
@@ -35,7 +36,6 @@ const ARABIC_DAYS = [
 export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
   if (!record) return null;
 
-  const densityPct = (record.density * 100).toFixed(1);
   const dateLabel = `${ARABIC_DAYS[record.date.getDay()]}، ${record.day} ${ARABIC_MONTHS[record.month]} ${record.year}`;
 
   const stats = [
@@ -58,12 +58,6 @@ export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
       color: "text-chart-blue",
     },
     {
-      icon: Activity,
-      label: "نسبة الكثافة",
-      value: `${densityPct}%`,
-      color: "text-destructive",
-    },
-    {
       icon: Clock,
       label: "ساعات العمل",
       value: record.isClosed
@@ -72,6 +66,14 @@ export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
       color: "text-chart-cyan",
     },
   ];
+
+  // رسمة دائرية واضحة لنسبة كثافة اليوم المحدد، بنفس منطق ألوان الجيدج
+  // الرئيسي عشان تفضل متسقة بصريًا في كل الداشبورد.
+  const pct = record.isClosed ? 0 : Math.round(record.density * 100);
+  const { main } = getGaugeColor(pct);
+  const ringR = 46;
+  const circumference = 2 * Math.PI * ringR;
+  const dashOffset = circumference - (pct / 100) * circumference;
 
   return (
     <div
@@ -99,7 +101,47 @@ export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
           <p className="font-medium">المتحف مغلق</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <>
+          <div className="flex justify-center mb-4">
+            <svg width="130" height="130" viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r={ringR}
+                fill="none"
+                stroke="hsl(220, 14%, 18%)"
+                strokeWidth="12"
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r={ringR}
+                fill="none"
+                stroke={main}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+                transform="rotate(-90 60 60)"
+                style={{ transition: "stroke-dashoffset 0.6s ease" }}
+              />
+              <text
+                x="60"
+                y="56"
+                textAnchor="middle"
+                fill={main}
+                fontSize="26"
+                fontWeight="800"
+              >
+                {pct}%
+              </text>
+              <text x="60" y="76" textAnchor="middle" fill="#999" fontSize="11">
+                {getLevelArabic(pct, record.isClosed)}
+              </text>
+            </svg>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {stats.map((s) => {
             const Icon = s.icon;
             return (
@@ -119,7 +161,8 @@ export function DayDetailsPanel({ record, onClose }: DayDetailsPanelProps) {
               </div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

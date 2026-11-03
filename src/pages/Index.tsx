@@ -275,7 +275,17 @@ const Index = () => {
                 : "lg:col-span-5 space-y-6"
             }
           >
-            <DensityGauge record={selectedRecord} todayRecord={todayRecord} />
+            <DensityGauge
+              record={selectedRecord}
+              todayRecord={todayRecord}
+              allData={allData}
+              filterYear={selectedYear}
+              filterMonth={selectedMonth}
+              filterWeek={selectedWeek}
+              onPeriodChange={(type, year, month, week) =>
+                handleDateChange(type, year, month, week)
+              }
+            />
             {visibility.detailsSection && selectedRecord && (
               <DayDetailsPanel
                 record={selectedRecord}
