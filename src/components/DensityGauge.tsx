@@ -86,13 +86,13 @@ const PERIOD_LABELS: Record<GaugePeriod, string> = {
   month: "شهر",
 };
 
-function getGaugeColor(pct: number) {
+export function getGaugeColor(pct: number) {
   if (pct <= 40) return { main: "hsl(160, 84%, 39%)" };
   if (pct <= 70) return { main: "hsl(32, 95%, 55%)" };
   return { main: "hsl(0, 72%, 51%)" };
 }
 
-function getLevelArabic(pct: number, isClosed: boolean) {
+export function getLevelArabic(pct: number, isClosed: boolean) {
   if (isClosed) return "مغلق";
   if (pct <= 40) return "منخفضة";
   if (pct <= 70) return "متوسطة";
