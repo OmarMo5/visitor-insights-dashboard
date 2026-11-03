@@ -11,6 +11,17 @@ interface DensityGaugeProps {
   record: VisitorRecord | null;
   todayRecord: VisitorRecord | null;
   allData: VisitorRecord[];
+  // المرجع المشترك مع فلتر الصفحة الرئيسي (MonthSelector) — بيخلي
+  // الكالندر والجدول والجيدج كلهم عايزين نفس الشهر/الأسبوع بالظبط.
+  filterYear: number;
+  filterMonth: number;
+  filterWeek: number;
+  onPeriodChange: (
+    type: "week" | "month",
+    year: number,
+    month: number,
+    week?: number,
+  ) => void;
 }
 
 type GaugePeriod = "day" | "week" | "month";
@@ -40,6 +51,17 @@ function shiftWeek(ref: DayRef, deltaWeeks: number): DayRef {
 function shiftMonth(ref: MonthRef, deltaMonths: number): MonthRef {
   const d = new Date(ref.year, ref.month - 1 + deltaMonths, 1);
   return { year: d.getFullYear(), month: d.getMonth() + 1 };
+}
+
+// بيرجع يوم موجود فعلاً جوا الأسبوع رقم weekNumber في الشهر ده،
+// عشان نقدر نستخدمه كمحور لحساب الأسبوع اللي قبله/بعده بدقة.
+function pivotDayForWeek(year: number, month: number, weekNumber: number): DayRef {
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let day = (weekNumber - 1) * 7 - firstDayOfWeek + 1;
+  if (day < 1) day = 1;
+  if (day > daysInMonth) day = daysInMonth;
+  return { year, month, day };
 }
 
 const ARABIC_MONTHS = [
@@ -81,6 +103,10 @@ export function DensityGauge({
   record,
   todayRecord,
   allData,
+  filterYear,
+  filterMonth,
+  filterWeek,
+  onPeriodChange,
 }: DensityGaugeProps) {
   const [period, setPeriod] = useState<GaugePeriod>("day");
 
@@ -89,46 +115,11 @@ export function DensityGauge({
   const [animatedPct, setAnimatedPct] = useState(0);
   const prevPct = useRef(0);
 
-  const now = new Date();
-  const refYear = active?.year ?? now.getFullYear();
-  const refMonth = active?.month ?? now.getMonth() + 1;
-  const refDay = active?.day ?? now.getDate();
-
-  // مرجع أسبوع/شهر الجيدج، بيتزامن مع اليوم المختار في الكالندر،
-  // وبعد كده يتحرك بزرار السابق/التالي لوحده من غير ما يرتبط بالكالندر.
-  const [weekAnchor, setWeekAnchor] = useState<DayRef>({
-    year: refYear,
-    month: refMonth,
-    day: refDay,
-  });
-  const [monthAnchor, setMonthAnchor] = useState<MonthRef>({
-    year: refYear,
-    month: refMonth,
-  });
-
-  useEffect(() => {
-    setWeekAnchor({ year: refYear, month: refMonth, day: refDay });
-    setMonthAnchor({ year: refYear, month: refMonth });
-  }, [refYear, refMonth, refDay]);
-
-  const weekNumber = getWeekNumber(
-    weekAnchor.year,
-    weekAnchor.month,
-    weekAnchor.day,
-  );
-
   const periodKpis =
     period === "week"
-      ? computeKPIs(
-          filterByWeek(
-            allData,
-            weekAnchor.year,
-            weekAnchor.month,
-            weekNumber,
-          ),
-        )
+      ? computeKPIs(filterByWeek(allData, filterYear, filterMonth, filterWeek))
       : period === "month"
-        ? computeKPIs(filterByMonth(allData, monthAnchor.year, monthAnchor.month))
+        ? computeKPIs(filterByMonth(allData, filterYear, filterMonth))
         : null;
 
   const isDay = period === "day";
@@ -212,8 +203,8 @@ export function DensityGauge({
 
   const periodLabel =
     period === "week"
-      ? `الأسبوع ${weekNumber} — ${ARABIC_MONTHS[weekAnchor.month]} ${weekAnchor.year}`
-      : `${ARABIC_MONTHS[monthAnchor.month]} ${monthAnchor.year}`;
+      ? `الأسبوع ${filterWeek} — ${ARABIC_MONTHS[filterMonth]} ${filterYear}`
+      : `${ARABIC_MONTHS[filterMonth]} ${filterYear}`;
 
   const subtitle = isDay
     ? record
@@ -221,14 +212,44 @@ export function DensityGauge({
       : "بيانات اليوم الحالي"
     : null;
 
+  // اختيار يوم/أسبوع/شهر من هنا بيحدّث فلتر الصفحة نفسه (نفس اللي فوق
+  // في MonthSelector)، عشان الكالندر والجدول وكروت الـ KPI كلهم يفضلوا
+  // متزامنين مع اللي ظاهر في الجيدج بالظبط.
+  const handlePeriodTab = (p: GaugePeriod) => {
+    setPeriod(p);
+    if (p === "week") {
+      const week =
+        active && active.year === filterYear && active.month === filterMonth
+          ? getWeekNumber(filterYear, filterMonth, active.day)
+          : filterWeek;
+      onPeriodChange("week", filterYear, filterMonth, week);
+    } else if (p === "month") {
+      onPeriodChange("month", filterYear, filterMonth);
+    }
+  };
+
   const goPrev = () => {
-    if (period === "week") setWeekAnchor((a) => shiftWeek(a, -1));
-    if (period === "month") setMonthAnchor((a) => shiftMonth(a, -1));
+    if (period === "week") {
+      const pivot = pivotDayForWeek(filterYear, filterMonth, filterWeek);
+      const shifted = shiftWeek(pivot, -1);
+      const week = getWeekNumber(shifted.year, shifted.month, shifted.day);
+      onPeriodChange("week", shifted.year, shifted.month, week);
+    } else if (period === "month") {
+      const shifted = shiftMonth({ year: filterYear, month: filterMonth }, -1);
+      onPeriodChange("month", shifted.year, shifted.month);
+    }
   };
 
   const goNext = () => {
-    if (period === "week") setWeekAnchor((a) => shiftWeek(a, 1));
-    if (period === "month") setMonthAnchor((a) => shiftMonth(a, 1));
+    if (period === "week") {
+      const pivot = pivotDayForWeek(filterYear, filterMonth, filterWeek);
+      const shifted = shiftWeek(pivot, 1);
+      const week = getWeekNumber(shifted.year, shifted.month, shifted.day);
+      onPeriodChange("week", shifted.year, shifted.month, week);
+    } else if (period === "month") {
+      const shifted = shiftMonth({ year: filterYear, month: filterMonth }, 1);
+      onPeriodChange("month", shifted.year, shifted.month);
+    }
   };
 
   return (
@@ -246,7 +267,7 @@ export function DensityGauge({
           {(Object.keys(PERIOD_LABELS) as GaugePeriod[]).map((p) => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              onClick={() => handlePeriodTab(p)}
               className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 period === p
                   ? "bg-primary text-primary-foreground"

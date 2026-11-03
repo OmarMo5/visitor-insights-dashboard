@@ -291,6 +291,12 @@ const SiteDashboard = ({ site }: SiteDashboardProps) => {
               record={selectedRecord}
               todayRecord={todayRecord}
               allData={allData}
+              filterYear={selectedYear}
+              filterMonth={selectedMonth}
+              filterWeek={selectedWeek}
+              onPeriodChange={(type, year, month, week) =>
+                handleDateChange(type, year, month, week)
+              }
             />
             {visibility.detailsSection && selectedRecord && (
               <DayDetailsPanel
